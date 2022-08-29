@@ -74,8 +74,18 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
                 dao.likeById(id)
                 if (response.body()!!.likedByMe) {
                     PostsApi.service.unlikeById(id)
+                    val body = (response.body())?.copy(
+                        likedByMe = false,
+                        likes = (response.body())!!.likes - 1
+                    ) ?: throw ApiError(response.code(), response.message())
+                    dao.insert(PostEntity.fromDto(body))
                 } else {
                     PostsApi.service.likeById(id)
+                    val body = (response.body())?.copy(
+                        likedByMe = true,
+                        likes = (response.body())!!.likes + 1
+                    ) ?: throw ApiError(response.code(), response.message())
+                    dao.insert(PostEntity.fromDto(body))
                 }
             }
         } catch (e: IOException) {
